@@ -15,6 +15,7 @@ import qualified Graphics.UI.Threepenny as UI
 import           System.Time.Extra (sleep)
 
 import           Cardano.Tracer.Configuration
+import           Cardano.Tracer.Handlers.RTView.Notifications.Utils
 import           Cardano.Tracer.Handlers.RTView.SSL.Certs
 import           Cardano.Tracer.Handlers.RTView.State.Displayed
 import           Cardano.Tracer.Handlers.RTView.State.EraSettings
@@ -61,11 +62,12 @@ runRTView TracerConfig{logging, network, hasRTView}
     -- show charts with historical data (where X axis is the time) for the
     -- period when RTView web-page wasn't opened.
     resourcesHistory <- initResourcesHistory
-    lastResources <- initLastResources
-    chainHistory <- initBlockchainHistory
-    txHistory <- initTransactionsHistory
-    eraSettings <- initErasSettings
-    errors <- initErrors
+    lastResources    <- initLastResources
+    chainHistory     <- initBlockchainHistory
+    txHistory        <- initTransactionsHistory
+    eraSettings      <- initErasSettings
+    errors           <- initErrors
+    eventsQueues     <- initEventsQueues
 
     void . sequenceConcurrently $
       [ UI.startGUI (config host port certFile keyFile) $
@@ -83,6 +85,7 @@ runRTView TracerConfig{logging, network, hasRTView}
             chainHistory
             txHistory
             errors
+            eventsQueues
       , runHistoricalUpdater
           savedTO
           acceptedMetrics

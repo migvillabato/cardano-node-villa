@@ -1,0 +1,70 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+
+module Cardano.Tracer.Handlers.RTView.Notifications.Types
+  ( EmailSSL (..)
+  , EmailSettings (..)
+  , EventsSettings (..)
+  , Event (..)
+  , EventGroup (..)
+  , EventsQueue
+  , EventsQueues
+  ) where
+
+import           Control.Concurrent.STM.TBQueue (TBQueue)
+import           Control.Concurrent.STM.TVar (TVar)
+import           Data.Aeson (FromJSON, ToJSON)
+import           Data.Map.Strict (Map)
+import           Data.Text (Text)
+import           Data.Time.Clock (UTCTime)
+import           GHC.Generics (Generic)
+
+import           Cardano.Tracer.Handlers.RTView.Notifications.Timer
+
+-- | Email settings for notifications.
+
+data EmailSSL
+  = TLS
+  | STARTTLS
+  | NoSSL
+  deriving (Generic, FromJSON, ToJSON, Read, Show)
+
+data EmailSettings = EmailSettings
+  { esSMTPHost  :: !Text
+  , esSMTPPort  :: !Int
+  , esUsername  :: !Text
+  , esPassword  :: !Text
+  , esSSL       :: !EmailSSL
+  , esEmailFrom :: !Text
+  , esEmailTo   :: !Text
+  , esSubject   :: !Text
+  } deriving (Generic, FromJSON, ToJSON)
+
+-- | Events settings for notifications.
+--   They corresponds to UI switches in Events window.
+
+data EventsSettings = EventsSettings
+  { evsErrors      :: !Bool
+  , evsCriticals   :: !Bool
+  , evsAlerts      :: !Bool
+  , evsEmergencies :: !Bool
+  } deriving (Generic, FromJSON, ToJSON)
+
+-- | Event we should notify about.
+data Event = Event
+  { evTime    :: !UTCTime
+  , evMessage :: !Text
+  } deriving (Show)
+
+-- | The queue for events we should notify about.
+type EventsQueue = TBQueue Event
+
+data EventGroup
+  = EventErrors
+  | EventCriticals
+  | EventAlerts
+  | EventEmergencies
+  deriving (Eq, Ord)
+
+-- | ...
+type EventsQueues = TVar (Map EventGroup (EventsQueue, Timer))

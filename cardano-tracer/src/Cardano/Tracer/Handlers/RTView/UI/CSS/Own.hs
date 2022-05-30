@@ -120,6 +120,11 @@ span[data-tooltip] {
   width: 50%;
 }
 
+.rt-view-divider {
+  margin-top: 5px;
+  margin-bottom: 13px;
+}
+
 @media only screen and (max-width: 1216px) {
   .rt-view-peer-modal {
     width: 60%;
@@ -148,6 +153,12 @@ span[data-tooltip] {
   }
 }
 
+@media screen and (min-width: 769px), print {
+  .field-label {
+    flex-grow: 1.5;
+  }
+}
+
 @media only screen and (max-width: 769px) {
   .rt-view-peer-modal {
     width: 80%;
@@ -160,6 +171,9 @@ span[data-tooltip] {
   .rt-view-ekg-metrics-modal {
     width: 80%;
   }
+}
+
+.rt-view-notifications-settings {
 }
 
 .rt-view-logs-input {
@@ -182,8 +196,19 @@ span[data-tooltip] {
   margin-top: 6px;
 }
 
+.rt-view-show-hide-pass-icon {
+  margin-top: 6px;
+}
+
 .rt-view-search-errors-icon {
   margin-top: 6px;
+}
+
+.rt-view-notifications-errors-select-wrapper {
+  padding-top: 7px;
+  padding-bottom: 11px;
+  float: right;
+  clear: right;
 }
 
 /* Dark Theme */
@@ -261,6 +286,12 @@ span[data-tooltip] {
   cursor: pointer;
 }
 
+
+.dark .rt-view-show-hide-pass-icon svg {
+  width: 20px;
+  cursor: pointer;
+}
+
 .dark .rt-view-sort-icon svg {
   width: 11px;
   margin-left: 9px;
@@ -310,6 +341,13 @@ span[data-tooltip] {
   color: #677deb;
 }
 
+.dark .rt-view-no-nodes-progress {
+  margin-top: 34px;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .dark .rt-view-notify-menu-icon svg {
   width: 15px;
   padding-top: 6px;
@@ -320,6 +358,7 @@ span[data-tooltip] {
 .dark .rt-view-no-nodes-message {
   font-size: 23px;
   color: whitesmoke;
+  text-align: center;
 }
 
 .dark .rt-view-charts-container {
@@ -412,8 +451,6 @@ span[data-tooltip] {
 .dark .rt-view-notifications-body {
   color: whitesmoke;
   background-color: #131325;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
 }
 
 .dark .rt-view-ekg-metrics-title {
@@ -491,6 +528,11 @@ span[data-tooltip] {
   font-size: 115%;
 }
 
+.dark .rt-view-events-title {
+  color: whitesmoke;
+  font-size: 105%;
+}
+
 .dark .rt-view-show-hide-chart-group svg {
   width: 21px;
   color: #0cc9cb;
@@ -532,6 +574,17 @@ span[data-tooltip] {
   margin-left: 20px;
   margin-right: 5px;
   color: #0cc9cb;
+}
+
+.dark .rt-view-email-only {
+  color: orange;
+  font-size: 95%;
+  margin-bottom: 21px;
+}
+
+.dark .rt-view-label {
+  font-size: 80%;
+  font-weight: 600;
 }
 
 /**** Light Theme ****/
@@ -609,6 +662,11 @@ span[data-tooltip] {
   cursor: pointer;
 }
 
+.light .rt-view-show-hide-pass-icon svg {
+  width: 20px;
+  cursor: pointer;
+}
+
 .light .rt-view-sort-icon svg {
   width: 11px;
   margin-left: 9px;
@@ -661,6 +719,14 @@ span[data-tooltip] {
 .light .rt-view-no-nodes-message {
   font-size: 23px;
   color: #0033ad;
+  text-align: center;
+}
+
+.light .rt-view-no-nodes-progress {
+  margin-top: 34px;
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .light .rt-view-charts-container {
@@ -753,8 +819,6 @@ span[data-tooltip] {
 .light .rt-view-notifications-body {
   color: #555;
   background-color: #eaeaea;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
 }
 
 .light .rt-view-ekg-metrics-title {
@@ -832,6 +896,11 @@ span[data-tooltip] {
   font-size: 110%;
 }
 
+.light .rt-view-events-title {
+  color: #555;
+  font-size: 105%;
+}
+
 .light .rt-view-show-hide-chart-group svg {
   width: 21px;
   color: #038b8c;
@@ -880,6 +949,17 @@ span[data-tooltip] {
   padding-top: 6px;
   margin-right: 9px;
   color: #0033ad;
+}
+
+.light .rt-view-email-only {
+  color: #d68c04;
+  font-size: 95%;
+  margin-bottom: 21px;
+}
+
+.light .rt-view-label {
+  font-size: 80%;
+  font-weight: 600;
 }
 |]
 

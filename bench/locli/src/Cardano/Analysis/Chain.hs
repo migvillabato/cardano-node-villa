@@ -1,7 +1,10 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving#-}
-{-# OPTIONS_GHC -Wno-deprecations -Wno-orphans #-}
+
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 {- HLINT ignore "Use head" -}
+
 module Cardano.Analysis.Chain (module Cardano.Analysis.Chain) where
 
 import Cardano.Prelude hiding (head)

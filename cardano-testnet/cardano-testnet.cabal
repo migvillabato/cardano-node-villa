@@ -25,13 +25,8 @@ common project-config
                         -Wredundant-constraints
                         -Wunused-packages
 
-common maybe-unix
-  if !os(windows)
-      build-depends:    unix
-
 library
   import:               base, project-config
-                      , maybe-unix
 
   build-depends:        aeson
                       , base16-bytestring
@@ -48,6 +43,8 @@ library
                       , hedgehog-extras
                       , http-client
                       , http-types
+                      , lens
+                      , lens-aeson
                       , ouroboros-network
                       , process
                       , random
@@ -60,6 +57,7 @@ library
   hs-source-dirs:       src
   exposed-modules:      Test.Base
                         Test.Process
+                        Testnet.Babbage
                         Testnet.Byron
                         Testnet.Cardano
                         Testnet.Conf
@@ -89,6 +87,7 @@ executable cardano-testnet
 
   other-modules:        Paths_cardano_testnet
                         Testnet.Commands
+                        Testnet.Commands.Babbage
                         Testnet.Commands.Byron
                         Testnet.Commands.Cardano
                         Testnet.Commands.Shelley

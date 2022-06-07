@@ -8,19 +8,51 @@
 let
 
   workbench' = tools:
-    pkgs.stdenv.mkDerivation {
-      pname = "workbench";
 
+    /* The function `mkDerivation` in the Nixpkgs standard environment is a
+       wrapper around `derivation` that adds a default value for system and
+       always uses Bash as the `builder`, to which the supplied builder is
+       passed as a command-line argument. See the Nixpkgs manual for details.
+    */
+    pkgs.stdenv.mkDerivation {
+
+      /* Specifying a `name` and a `src` is the absolute minimum Nix requires.
+         For convenience, you can also use `pname` and `version` attributes and
+         `mkDerivation` will automatically set `name` to "${pname}-${version}"
+         by default. Since [RFC 0035](https://github.com/NixOS/rfcs/pull/35),
+         this is preferred for packages in Nixpkgs, as it allows us to reuse the
+         version easily:
+      */
+      pname = "workbench";
       version = "0.1";
 
+      # The list of source files or directories to be unpacked or copied.
       src = ./.;
 
+      /* Many packages have dependencies that are not provided in the standard
+         environment. It’s usually sufficient to specify those dependencies in
+         the `buildInputs` attribute.
+         This attribute ensures that the bin subdirectories of these packages
+         appear in the PATH environment variable during the build, that their
+         include subdirectories are searched by the C compiler, and so on.
+      */
       buildInputs = [ jq pkgs.makeWrapper ];
+
+      /* Often it is necessary to override or modify some aspect of the build.
+         To make this easier, the standard environment breaks the package build
+         into a number of phases, all of which can be overridden or modified
+         individually: unpacking the sources, applying patches, configuring,
+         building, and installing. (There are some others; see Section 6.5,
+         [Phases](https://nixos.org/manual/nixpkgs/stable/#sec-stdenv-phases).)
+      */
 
       buildPhase = ''
         patchShebangs .
       '';
 
+      /* The fixup phase performs some (Nix-specific) post-processing actions on
+         the files installed under $out by the install phase.
+      */
       postFixup = ''
         wrapProgram "$out/bin/wb" --argv0 wb --prefix PATH ":" ${lib.makeBinPath tools}
       '';
@@ -30,6 +62,12 @@ let
         cp -a wb chain-filters profiles *.sh *.jq $out/bin
       '';
 
+      /* (Note the use of ''-style string literals, which are very convenient
+         for large multi-line script fragments because they don’t need escaping
+         of " and \, and because indentation is intelligently removed.)
+      */
+
+      # If set libraries and executables are not stripped. By default, they are.
       dontStrip = true;
 
       trace = builtins.trace (builtins.attrNames pkgs) "";

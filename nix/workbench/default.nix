@@ -63,7 +63,7 @@ let
   runWorkbenchJqOnly =
     name: command:
     runCommand name {} ''
-      ${workbench' (with pkgs; [jq moreutils])}/bin/wb ${command} > $out
+      ${workbench' [jq pkgs.moreutils]}/bin/wb ${command} > $out
     '';
 
   runJq =

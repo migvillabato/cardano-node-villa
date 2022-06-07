@@ -21,7 +21,7 @@ let
 
       src = ./.;
 
-      buildInputs = with pkgs; [ jq makeWrapper ];
+      buildInputs = [ jq pkgs.makeWrapper ];
 
       buildPhase = ''
         patchShebangs .
@@ -37,6 +37,9 @@ let
       '';
 
       dontStrip = true;
+
+      trace = builtins.trace (builtins.attrNames pkgs) "";
+      federico = cardano-world.x86_64-linux.cardano.oci-images.cardano-node;
     };
 
   workbench = with cardanoNodePackages; with pkgs; workbench' (

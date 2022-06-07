@@ -5,9 +5,9 @@
 , checkoutWbMode ? "unknown"
 }:
 
-with lib;
-
 let
+  inherit (lib) optionalString;
+
   shellHook = ''
     echo 'workbench shellHook:  workbenchDevMode=${toString workbenchDevMode} useCabalRun=${toString useCabalRun} profileName=${profileName}'
     export WORKBENCH_BACKEND=supervisor

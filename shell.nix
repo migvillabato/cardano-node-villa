@@ -17,13 +17,12 @@ in
 , profiled ? false
 , cardano-mainnet-mirror ? __getFlake "github:input-output-hk/cardano-mainnet-mirror/nix"
 }:
-with pkgs;
 let
   inherit (pkgs) customConfig;
   inherit (customConfig) withHoogle localCluster;
   inherit (localCluster) profileName workbenchDevMode;
   inherit (pkgs.haskell-nix) haskellLib;
-  project = if profiled then cardanoNodeProject.profiled else cardanoNodeProject;
+  project = if profiled then pkgs.cardanoNodeProject.profiled else pkgs.cardanoNodeProject;
   commandHelp =
     ''
       echo "
@@ -42,11 +41,11 @@ let
   setLocale =
     ''
       export LANG="en_US.UTF-8"
-    '' + lib.optionalString haveGlibcLocales ''
+    '' + pkgs.lib.optionalString haveGlibcLocales ''
       export LOCALE_ARCHIVE="${pkgs.glibcLocales}/lib/locale/locale-archive"
     '';
 
-  haveGlibcLocales = pkgs.glibcLocales != null && stdenv.hostPlatform.libc == "glibc";
+  haveGlibcLocales = pkgs.glibcLocales != null && pkgs.stdenv.hostPlatform.libc == "glibc";
 
   shell =
     let cluster = pkgs.supervisord-workbench-for-profile
@@ -66,22 +65,22 @@ let
     };
 
     # These programs will be available inside the nix-shell.
-    nativeBuildInputs = with haskellPackages; with cardanoNodePackages; [
+    nativeBuildInputs = with pkgs.haskellPackages; with pkgs.cardanoNodePackages; [
       cardano-ping
-      cabalWrapped
+      pkgs.cabalWrapped
       db-analyser
       ghcid
-      haskellBuildUtils
+      pkgs.haskellBuildUtils
       pkgs.graphviz
       weeder
-      nixWrapped
-      pkgconfig
+      pkgs.nixWrapped
+      pkgs.pkgconfig
       profiteur
       profiterole
-      python3Packages.supervisor
+      pkgs.python3Packages.supervisor
       ghc-prof-flamegraph
-      sqlite-interactive
-      tmux
+      pkgs.sqlite-interactive
+      pkgs.tmux
       pkgs.git
       pkgs.hlint
       pkgs.moreutils
@@ -90,9 +89,9 @@ let
       cluster.interactive-start
       cluster.interactive-stop
       cluster.interactive-restart
-    ] ++ lib.optional haveGlibcLocales pkgs.glibcLocales
+    ] ++ pkgs.lib.optional haveGlibcLocales pkgs.glibcLocales
     ## Workbench's main script is called directly in dev mode.
-    ++ lib.optionals (!workbenchDevMode)
+    ++ pkgs.lib.optionals (!workbenchDevMode)
     [
       cluster.workbench.workbench
     ];
@@ -103,7 +102,7 @@ let
 
     shellHook = ''
       ${with customConfig.localCluster;
-        (import ./nix/workbench/shell.nix { inherit lib workbenchDevMode profileName useCabalRun; }).shellHook}
+        (import ./nix/workbench/shell.nix { inherit (pkgs) lib; inherit workbenchDevMode profileName useCabalRun; }).shellHook}
 
       function workbench_atexit() {
           if wb backend is-running
@@ -131,7 +130,7 @@ let
 
     packages = _: [];
 
-    nativeBuildInputs = with cardanoNodePackages; [
+    nativeBuildInputs = with pkgs.cardanoNodePackages; [
       nixWrapped
       cardano-cli
       bech32
@@ -155,8 +154,8 @@ let
 
     shellHook = ''
       echo "DevOps Tools" \
-      | ${figlet}/bin/figlet -f banner -c \
-      | ${lolcat}/bin/lolcat
+      | ${pkgs.figlet}/bin/figlet -f banner -c \
+      | ${pkgs.lolcat}/bin/lolcat
 
       ${with customConfig.localCluster;
         (import ./nix/workbench/shell.nix { inherit lib workbenchDevMode profileName; useCabalRun = false; }).shellHook}
@@ -167,9 +166,9 @@ let
       ${setLocale}
 
       # Unless using specific network:
-      ${lib.optionalString (__hasAttr "network" customConfig) ''
+      ${pkgs.lib.optionalString (__hasAttr "network" customConfig) ''
         export CARDANO_NODE_SOCKET_PATH="$PWD/state-node-${customConfig.network}/node.socket"
-        ${lib.optionalString (__hasAttr "utxo" pkgs.commonLib.cardanoLib.environments.${customConfig.network}) ''
+        ${pkgs.lib.optionalString (__hasAttr "utxo" pkgs.commonLib.cardanoLib.environments.${customConfig.network}) ''
           # Selfnode and other test clusters have public secret keys that we pull from iohk-nix
           echo "To access funds use UTXO_SKEY and UTXO_VKEY environment variables"
           export UTXO_SKEY="${pkgs.commonLib.cardanoLib.environments.${customConfig.network}.utxo.signing}"

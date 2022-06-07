@@ -6,14 +6,12 @@
 }:
 
 let
-  inherit (lib) optionalString;
-
   shellHook = ''
     echo 'workbench shellHook:  workbenchDevMode=${toString workbenchDevMode} useCabalRun=${toString useCabalRun} profileName=${profileName}'
     export WORKBENCH_BACKEND=supervisor
     export WORKBENCH_SHELL_PROFILE=${profileName}
 
-    ${optionalString
+    ${lib.optionalString
       workbenchDevMode
     ''
     export WORKBENCH_CARDANO_NODE_REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -25,7 +23,7 @@ let
     export -f wb
     ''}
 
-    ${optionalString
+    ${lib.optionalString
       useCabalRun
       ''
       . nix/workbench/lib.sh

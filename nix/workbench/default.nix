@@ -9,7 +9,6 @@ let
 
   # Being super verbose about everything needed from the `lib` parameter.
   # Instead of doing `with lib;`
-  inherit (lib) makeBinPath;
   inherit (lib) mapAttrs;
 
   workbench' = tools:
@@ -27,7 +26,7 @@ let
       '';
 
       postFixup = ''
-        wrapProgram "$out/bin/wb" --argv0 wb --prefix PATH ":" ${makeBinPath tools}
+        wrapProgram "$out/bin/wb" --argv0 wb --prefix PATH ":" ${lib.makeBinPath tools}
       '';
 
       installPhase = ''

@@ -9,7 +9,6 @@ let
 
   # Being super verbose about everything needed from the `lib` parameter.
   # Instead of doing `with lib;`
-  inherit (lib) genAttrs;
   inherit (lib) makeBinPath;
   inherit (lib) mapAttrs;
 
@@ -99,7 +98,7 @@ let
               profileName;
           };
 
-      value = genAttrs profile-names mkProfile;
+      value = lib.genAttrs profile-names mkProfile;
 
       JSON = pkgs.writeText "all-profiles.json" (__toJSON (mapAttrs (_: x: x.value) value));
     };

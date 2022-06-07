@@ -2,6 +2,7 @@
 , lib, jq, runCommand
 , db-analyser
 , cardanoNodePackages
+, cardano-world
 }:
 
 with lib;

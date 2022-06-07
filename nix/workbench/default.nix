@@ -5,9 +5,14 @@
 , cardano-world
 }:
 
-with lib;
-
 let
+
+  # Being super verbose about everything needed from the `lib` parameter.
+  # Instead of doing `with lib;`
+  inherit (lib) genAttrs;
+  inherit (lib) makeBinPath;
+  inherit (lib) mapAttrs;
+
   workbench' = tools:
     pkgs.stdenv.mkDerivation {
       pname = "workbench";

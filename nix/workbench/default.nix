@@ -7,10 +7,6 @@
 
 let
 
-  # Being super verbose about everything needed from the `lib` parameter.
-  # Instead of doing `with lib;`
-  inherit (lib) mapAttrs;
-
   workbench' = tools:
     pkgs.stdenv.mkDerivation {
       pname = "workbench";
@@ -99,7 +95,7 @@ let
 
       value = lib.genAttrs profile-names mkProfile;
 
-      JSON = pkgs.writeText "all-profiles.json" (__toJSON (mapAttrs (_: x: x.value) value));
+      JSON = pkgs.writeText "all-profiles.json" (__toJSON (lib.mapAttrs (_: x: x.value) value));
     };
 
   ## materialise-profile :: ProfileNix -> BackendProfile -> Profile

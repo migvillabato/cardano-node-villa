@@ -36,7 +36,7 @@ let
          appear in the PATH environment variable during the build, that their
          include subdirectories are searched by the C compiler, and so on.
       */
-      buildInputs = [ jq pkgs.makeWrapper ];
+      buildInputs = [ jq pkgs.makeWrapper cardano-world.x86_64-linux.cardano.oci-images.cardano-node ];
 
       /* Often it is necessary to override or modify some aspect of the build.
          To make this easier, the standard environment breaks the package build
@@ -60,6 +60,7 @@ let
       installPhase = ''
         mkdir -p         $out/bin
         cp -a wb chain-filters profiles *.sh *.jq $out/bin
+        cp copyToPodman $out/bin
       '';
 
       /* (Note the use of ''-style string literals, which are very convenient

@@ -42,9 +42,7 @@ module Cardano.Api (
     AsType(..),
     -- * Cryptographic key interface
     -- $keys
-    Key,
-    VerificationKey,
-    SigningKey(..),
+    Key(SigningKey, VerificationKey),
     getVerificationKey,
     verificationKeyHash,
     castVerificationKey,

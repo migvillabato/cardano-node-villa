@@ -475,6 +475,33 @@ for ADDR in ${ADDRS}; do
       --stake-verification-key-file addresses/${ADDR}-stake.vkey \
       --out-file addresses/${ADDR}-stake.reg.cert
 
+  cardano-cli
+    [ "transaction", "build"
+    , "--alonzo-era"
+    , "--testnet-magic", show @Int testnetMagic
+    , "--change-address",  utxoAddr
+    , "--tx-in", T.unpack $ renderTxIn txin
+    , "--tx-out", poolowneraddresswstakecred <> "+" <> show @Int 5000000
+    , "--tx-out", utxoaddrwithstaking <> "+" <> show @Int 5000000
+    , "--witness-override", show @Int 3
+    , "--certificate-file", work </> "pledger.regcert"
+    , "--out-file", work </> "pledge-registration-cert.txbody"
+    ]
+
+  cardano-cli
+    [ "transaction", "sign"
+    , "--tx-body-file", work </> "pledge-registration-cert.txbody"
+    , "--testnet-magic", show @Int testnetMagic
+    , "--signing-key-file", utxoSKeyFile
+    , "--out-file", work </> "pledge-registration-cert.tx"
+    ]
+
+  cardano-cli
+    [ "transaction", "submit"
+    , "--tx-file", work </> "pledge-registration-cert.tx"
+    , "--testnet-magic", show @Int testnetMagic
+    ]
+
 done
 
 # user N will delegate to pool N

@@ -120,6 +120,7 @@ test-suite cardano-testnet-tests
 
   other-modules:
                         Spec.Cli.KesPeriodInfo
+                        Spec.Cli.LeadershipSchedule
                         Spec.Node.Shutdown
                         Spec.ShutdownOnSlotSynced
                         Testnet.Properties.Cli.KesPeriodInfo

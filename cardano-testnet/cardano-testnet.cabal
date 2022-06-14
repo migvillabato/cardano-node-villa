@@ -117,6 +117,7 @@ test-suite cardano-testnet-tests
                       , tasty-expected-failure
                       , tasty-hedgehog
                       , text
+                      , time
 
   other-modules:
                         Spec.Cli.KesPeriodInfo

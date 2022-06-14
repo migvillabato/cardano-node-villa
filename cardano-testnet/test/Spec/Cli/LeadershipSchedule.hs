@@ -28,6 +28,7 @@ import qualified Data.Aeson as J
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
+import qualified Data.Time.Clock as DTC
 import qualified Hedgehog as H
 import qualified Hedgehog.Extras.Stock.IO.Network.Sprocket as IO
 import qualified Hedgehog.Extras.Test.Base as H
@@ -187,7 +188,7 @@ hprop_leadershipSchedule = H.integration . H.runFinallies . H.workspace "alonzo"
   -- Check to see if pledge's stake address was registered
 
   void $ H.execCli' execConfig
-    [ "query",  "stake-address-info"
+    [ "query", "stake-address-info"
     , "--address", poolownerstakeaddr
     , "--testnet-magic", show @Int testnetMagic
     , "--out-file", work </> "pledgeownerregistration.json"
@@ -395,7 +396,7 @@ hprop_leadershipSchedule = H.integration . H.runFinallies . H.workspace "alonzo"
   H.note_ "Wait for rewards to be paid out. This will be current epoch + 4"
 
   void $ H.execCli' execConfig
-    [ "query",  "tip"
+    [ "query", "tip"
     , "--testnet-magic", show @Int testnetMagic
     , "--out-file", work </> "current-tip.json"
     ]
@@ -418,9 +419,8 @@ hprop_leadershipSchedule = H.integration . H.runFinallies . H.workspace "alonzo"
   H.note_ "Check we have reached 4 epochs ahead"
   waitedEpoch === rewardsEpoch
 
-
   void $ H.execCli' execConfig
-    [ "query",  "tip"
+    [ "query", "tip"
     , "--testnet-magic", show @Int testnetMagic
     , "--out-file", work </> "current-tip-2.json"
     ]
@@ -435,3 +435,36 @@ hprop_leadershipSchedule = H.integration . H.runFinallies . H.workspace "alonzo"
       Just currEpoch2 -> return currEpoch2
 
   H.note_ $ "Current Epoch: " <> show currEpoch2
+
+  now <- H.noteShowIO DTC.getCurrentTime
+  deadline <- H.noteShow $ DTC.addUTCTime 90 now
+
+  H.assertByDeadlineMCustom "stdout does not contain \"until genesis start time\"" deadline $ do
+    H.threadDelay 1000000
+    void $ H.execCli' execConfig
+      [ "query", "tip"
+      , "--testnet-magic", show @Int testnetMagic
+      , "--out-file", work </> "current-tip-3.json"
+      ]
+
+    tip3JSON <- H.leftFailM . H.readJsonFile $ work </> "current-tip-3.json"
+    tip3 <- H.noteShowM $ H.jsonErrorFail $ J.fromJSON @QueryTipLocalStateOutput tip3JSON
+
+    currEpoch3 <-
+      case mEpoch tip3 of
+        Nothing ->
+          H.failMessage callStack "cardano-cli query tip returned Nothing for EpochNo"
+        Just currEpoch3 -> return currEpoch3
+
+    H.note_ $ "Current Epoch: " <> show currEpoch3
+    return (currEpoch3 > currEpoch2 + 1)
+
+  void $ H.execCli' execConfig
+    [ "query", "protocol-parameters"
+    , "--cardano-mode"
+    , "--testnet-magic", show @Int testnetMagic
+    , "--out-file"
+    , work </> "current-tip-2.json"
+    ]
+
+  True === False

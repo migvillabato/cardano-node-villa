@@ -518,8 +518,11 @@ hprop_leadershipSchedule = H.integration . H.runFinallies . H.workspace "alonzo"
   H.assertByDeadlineMCustom "Leader schedule is correct" leadershipDeadline $ do
     vs <- H.readJsonLines $ TC.nodeStdout poolNode1
     leaderSlots <- H.noteShow
-      $ L.filter       (>= minimum expectedLeadershipSlotNumbers)
       $ Maybe.mapMaybe (\v -> v ^? J.key "data" . J.key "val" . J.key "slot" . J._Integer. to fromIntegral)
       $ L.filter       (\v -> v ^. J.key "data" . J.key "val" . J.key "kind" . J._String == "TraceNodeIsLeader")
       vs
-    return $ L.null $ expectedLeadershipSlotNumbers \\ leaderSlots
+    relevantLeaderSlots <- H.noteShow
+      $ L.filter       (>= minimum expectedLeadershipSlotNumbers)
+      leaderSlots
+
+    return $ L.null $ expectedLeadershipSlotNumbers \\ relevantLeaderSlots

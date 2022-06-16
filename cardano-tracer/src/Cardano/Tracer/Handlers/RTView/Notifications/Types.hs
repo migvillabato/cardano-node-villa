@@ -20,6 +20,7 @@ import           Data.Time.Clock (UTCTime)
 import           GHC.Generics (Generic)
 
 import           Cardano.Tracer.Handlers.RTView.Notifications.Timer
+import           Cardano.Tracer.Types
 
 -- | Email settings for notifications.
 
@@ -44,15 +45,16 @@ data EmailSettings = EmailSettings
 --   They corresponds to UI switches in Events window.
 
 data EventsSettings = EventsSettings
-  { evsErrors      :: !Bool
-  , evsCriticals   :: !Bool
-  , evsAlerts      :: !Bool
-  , evsEmergencies :: !Bool
+  { evsErrors      :: !(Bool, PeriodInSec)
+  , evsCriticals   :: !(Bool, PeriodInSec)
+  , evsAlerts      :: !(Bool, PeriodInSec)
+  , evsEmergencies :: !(Bool, PeriodInSec)
   } deriving (Generic, FromJSON, ToJSON)
 
 -- | Event we should notify about.
 data Event = Event
-  { evTime    :: !UTCTime
+  { evNodeId  :: !NodeId
+  , evTime    :: !UTCTime
   , evMessage :: !Text
   } deriving (Show)
 

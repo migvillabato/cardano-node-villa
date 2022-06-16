@@ -38,6 +38,6 @@ sendNotification emailSettings newEvents =
     ]
 
   events = T.intercalate nl
-    ["[" <> showT ts <> "] [" <> showT msg <> "]" | Event ts msg <- newEvents]
+    ["[" <> showT ts <> "] [" <> showT nodeId <> "] [" <> showT msg <> "]" | Event nodeId ts msg <- newEvents]
 
   onlyOne = length newEvents == 1

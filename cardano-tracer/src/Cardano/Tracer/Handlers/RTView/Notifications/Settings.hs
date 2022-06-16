@@ -4,14 +4,16 @@
 
 module Cardano.Tracer.Handlers.RTView.Notifications.Settings
   ( readSavedEmailSettings
+  , readSavedEventsSettings
   , saveEmailSettingsOnDisk
+  , saveEventsSettingsOnDisk
   ) where
 
 import           Control.Exception.Extra (ignore, try_)
 import           Crypto.Cipher.AES (AES256)
 import           Crypto.Cipher.Types (BlockCipher (..), cipherInit, ctrCombine, nullIV)
 import           Crypto.Error (CryptoError, eitherCryptoError)
-import           Data.Aeson (decodeStrict', encode)
+import           Data.Aeson (decodeStrict', decodeFileStrict', encode, encodeFile)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 
@@ -58,6 +60,21 @@ encryptJSON plainJSON = ctrCombine
   key :: BS.ByteString
   key = "n3+d6^jrodGe$1Ljwt;iBtsi_mxzp-47"
 
+readSavedEventsSettings :: IO EventsSettings
+readSavedEventsSettings = do
+  (_, pathToEventsSettings) <- getPathsToNotificationsSettings
+  decodeFileStrict' pathToEventsSettings >>= \case
+    Nothing -> return defaultSettings
+    Just (settings :: EventsSettings) -> return settings
+ where
+  defaultSettings = EventsSettings
+    { evsErrors      = defaultState
+    , evsCriticals   = defaultState
+    , evsAlerts      = defaultState
+    , evsEmergencies = defaultState
+    }
+  defaultState = (False, 1800)
+
 saveEmailSettingsOnDisk :: EmailSettings -> IO ()
 saveEmailSettingsOnDisk settings = ignore $ do
   (pathToEmailSettings, _) <- getPathsToNotificationsSettings
@@ -65,3 +82,8 @@ saveEmailSettingsOnDisk settings = ignore $ do
   case encryptJSON . LBS.toStrict . encode $ settings of
     Right encryptedJSON -> BS.writeFile pathToEmailSettings encryptedJSON
     Left _ -> return ()
+
+saveEventsSettingsOnDisk :: EventsSettings -> IO ()
+saveEventsSettingsOnDisk settings = ignore $ do
+  (_, pathToEventsSettings) <- getPathsToNotificationsSettings
+  encodeFile pathToEventsSettings settings

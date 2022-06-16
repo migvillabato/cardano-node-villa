@@ -4,19 +4,25 @@
 module Cardano.Tracer.Handlers.RTView.UI.Notifications
   ( getCurrentEmailSettings
   , restoreEmailSettings
+  , restoreEventsSettings
   , saveEmailSettings
+  , saveEventsSettings
   , setStatusTestEmailButton
   ) where
 
 import           Control.Monad (unless)
+import           Data.Maybe (fromMaybe)
 import           Data.Text (pack, unpack)
 import qualified Data.Text as T
+import           Data.Text.Read (decimal)
 import qualified Graphics.UI.Threepenny as UI
 import           Graphics.UI.Threepenny.Core
 
 import           Cardano.Tracer.Handlers.RTView.Notifications.Settings
+import           Cardano.Tracer.Handlers.RTView.Notifications.Timer
 import           Cardano.Tracer.Handlers.RTView.Notifications.Types
 import           Cardano.Tracer.Handlers.RTView.UI.Utils
+import           Cardano.Tracer.Handlers.RTView.UI.JS.Utils
 import           Cardano.Tracer.Handlers.RTView.Update.Utils
 
 restoreEmailSettings :: Window -> UI ()
@@ -39,9 +45,34 @@ restoreEmailSettings window = do
     unless (null elValue || elValue == "-1") $
       findAndSet (set value elValue) window elId
 
+restoreEventsSettings :: Window -> UI ()
+restoreEventsSettings window =
+  setEventsSettings =<< liftIO readSavedEventsSettings
+ where
+  setEventsSettings settings = do
+    setState (fst $ evsErrors settings)      "switch-errors"
+    setState (fst $ evsCriticals settings)   "switch-criticals"
+    setState (fst $ evsAlerts settings)      "switch-alerts"
+    setState (fst $ evsEmergencies settings) "switch-emergencies"
+
+    setPeriod (snd $ evsErrors settings)      "select-period-errors"
+    setPeriod (snd $ evsCriticals settings)   "select-period-criticals"
+    setPeriod (snd $ evsAlerts settings)      "select-period-alerts"
+    setPeriod (snd $ evsEmergencies settings) "select-period-emergencies"
+
+  setState elState elId =
+    findAndSet (set UI.checked elState) window elId
+
+  setPeriod elPeriod elId =
+    selectOption elId $ fromIntegral elPeriod
+
 saveEmailSettings :: Window -> UI ()
 saveEmailSettings window =
   (liftIO . saveEmailSettingsOnDisk) =<< getCurrentEmailSettings window
+
+saveEventsSettings :: Window -> UI ()
+saveEventsSettings window =
+  (liftIO . saveEventsSettingsOnDisk) =<< getCurrentEventsSettings window
 
 getCurrentEmailSettings :: Window -> UI EmailSettings
 getCurrentEmailSettings window = do
@@ -64,6 +95,31 @@ getCurrentEmailSettings window = do
     , esSubject   = pack subject
     }
 
+getCurrentEventsSettings :: Window -> UI EventsSettings
+getCurrentEventsSettings window = do
+  errorsState      <- fromMaybe False <$> findAndGetCheckboxState window "switch-errors"
+  criticalsState   <- fromMaybe False <$> findAndGetCheckboxState window "switch-criticals"
+  alertsState      <- fromMaybe False <$> findAndGetCheckboxState window "switch-alerts"
+  emergenciesState <- fromMaybe False <$> findAndGetCheckboxState window "switch-emergencies"
+
+  errorsPeriod      <- readPeriod 1800 <$> findAndGetValue window "select-period-errors"
+  criticalsPeriod   <- readPeriod 1800 <$> findAndGetValue window "select-period-criticals"
+  alertsPeriod      <- readPeriod 1800 <$> findAndGetValue window "select-period-alerts"
+  emergenciesPeriod <- readPeriod 1800 <$> findAndGetValue window "select-period-emergencies"
+
+  return $ EventsSettings
+    { evsErrors      = (errorsState,      errorsPeriod)
+    , evsCriticals   = (criticalsState,   criticalsPeriod)
+    , evsAlerts      = (alertsState,      alertsPeriod)
+    , evsEmergencies = (emergenciesState, emergenciesPeriod)
+    }
+ where
+  readPeriod :: PeriodInSec -> String -> PeriodInSec
+  readPeriod defP s =
+    case decimal (pack s) of
+      Left _ -> defP
+      Right ((i :: Int), _) -> fromIntegral i
+
 setStatusTestEmailButton :: Window -> UI ()
 setStatusTestEmailButton window = do
   EmailSettings host _ user pass _ eFrom eTo _ <- getCurrentEmailSettings window
@@ -74,5 +130,5 @@ setStatusTestEmailButton window = do
         && isHere eFrom
         && isHere eTo
   findAndSet (set UI.enabled allRequiredIsHere) window "send-test-email"
- where 
+ where
   isHere = not . T.null

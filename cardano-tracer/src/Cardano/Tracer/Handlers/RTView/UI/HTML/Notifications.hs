@@ -24,17 +24,17 @@ mkNotificationsEvents :: EventsQueues -> UI Element
 mkNotificationsEvents eventsQueues = do
   closeIt <- UI.button #. "delete"
 
-  switchErrors      <- mkSwitch "switch-errors"      "Errors"      "danger"
-  switchCriticals   <- mkSwitch "switch-criticals"   "Criticals"   "danger"
-  switchAlerts      <- mkSwitch "switch-alerts"      "Alerts"      "danger"
-  switchEmergencies <- mkSwitch "switch-emergencies" "Emergencies" "danger"
-  switchMissedSlots <- mkSwitch "switch-missed-slots" "Missed slots" "info"
+  (switchErrors,      switchErrorsW)      <- mkSwitch "switch-errors"      "Errors"      "danger"
+  (switchCriticals,   switchCriticalsW)   <- mkSwitch "switch-criticals"   "Criticals"   "danger"
+  (switchAlerts,      switchAlertsW)      <- mkSwitch "switch-alerts"      "Alerts"      "danger"
+  (switchEmergencies, switchEmergenciesW) <- mkSwitch "switch-emergencies" "Emergencies" "danger"
+  (_switchMissedSlots, switchMissedSlotsW) <- mkSwitch "switch-missed-slots" "Missed slots" "info"
 
-  selectNotifyPeriodErrors      <- mkSelect
-  selectNotifyPeriodCriticals   <- mkSelect
-  selectNotifyPeriodAlerts      <- mkSelect
-  selectNotifyPeriodEmergencies <- mkSelect
-  selectNotifyPeriodMissed      <- mkSelect
+  selectNotifyPeriodErrors      <- mkSelect "select-period-errors"
+  selectNotifyPeriodCriticals   <- mkSelect "select-period-criticals"
+  selectNotifyPeriodAlerts      <- mkSelect "select-period-alerts"
+  selectNotifyPeriodEmergencies <- mkSelect "select-period-emergencies"
+  selectNotifyPeriodMissed      <- mkSelect "select-period-missed"
 
   notifications <-
     UI.div #. "modal" #+
@@ -48,10 +48,10 @@ mkNotificationsEvents eventsQueues = do
               [ mkDivider "Common Errors"
               , UI.div #. "columns" #+
                   [ UI.div #. "column" #+
-                      [ element switchErrors
-                      , element switchCriticals
-                      , element switchAlerts
-                      , element switchEmergencies
+                      [ element switchErrorsW
+                      , element switchCriticalsW
+                      , element switchAlertsW
+                      , element switchEmergenciesW
                       ]
                   , UI.div #. "column" #+
                       [ mkErrorsSelectWrapper selectNotifyPeriodErrors
@@ -63,7 +63,7 @@ mkNotificationsEvents eventsQueues = do
               , mkDivider "Blockchain"
               , UI.div #. "columns" #+
                   [ UI.div #. "column" #+
-                      [ element switchMissedSlots
+                      [ element switchMissedSlotsW
                       ]
                   , UI.div #. "column" #+
                       [ mkErrorsSelectWrapper selectNotifyPeriodMissed
@@ -84,16 +84,22 @@ mkNotificationsEvents eventsQueues = do
           ]
       ]
 
-  on UI.click closeIt . const $ element notifications #. "modal"
+  on UI.click closeIt . const $ do
+    void $ element notifications #. "modal"
+    askWindow >>= saveEventsSettings
 
-  on UI.checkedChange switchErrors $
-    liftIO . updateNotificationsEvents eventsQueues EventErrors
-  on UI.checkedChange switchCriticals $
-    liftIO . updateNotificationsEvents eventsQueues EventCriticals
-  on UI.checkedChange switchAlerts $
-    liftIO . updateNotificationsEvents eventsQueues EventAlerts
-  on UI.checkedChange switchEmergencies $
-    liftIO . updateNotificationsEvents eventsQueues EventEmergencies
+  on UI.checkedChange switchErrors $ \state -> do
+    askWindow >>= saveEventsSettings
+    liftIO $ updateNotificationsEvents eventsQueues EventErrors state
+  on UI.checkedChange switchCriticals $ \state -> do
+    askWindow >>= saveEventsSettings
+    liftIO $ updateNotificationsEvents eventsQueues EventCriticals state
+  on UI.checkedChange switchAlerts $ \state -> do
+    askWindow >>= saveEventsSettings
+    liftIO $ updateNotificationsEvents eventsQueues EventAlerts state
+  on UI.checkedChange switchEmergencies $ \state -> do
+    askWindow >>= saveEventsSettings
+    liftIO $ updateNotificationsEvents eventsQueues EventEmergencies state
 
   handleSelectChange selectNotifyPeriodErrors      EventErrors
   handleSelectChange selectNotifyPeriodCriticals   EventCriticals
@@ -119,9 +125,9 @@ mkErrorsSelectWrapper sel =
     [ UI.div #. "select is-link is-small" #+ [element sel]
     ]
 
-mkSelect :: UI Element
-mkSelect =
-  UI.select #+
+mkSelect :: String -> UI Element
+mkSelect elId =
+  UI.select ## elId #+
     -- Values are periods in seconds.
     [ UI.option # set value "5"     # set text "Immediately"
     , UI.option # set value "300"   # set text "Every 5 minutes"
@@ -135,16 +141,22 @@ mkSwitch
   :: String
   -> String
   -> String
-  -> UI Element
-mkSwitch switchId switchName bulmaColorName =
-  UI.div #. "field" #+
-    [ UI.input ## switchId
-               #. ("switch is-rounded is-" <> bulmaColorName)
-               # set UI.type_ "checkbox"
-               # set UI.name switchId
-    , UI.label # set UI.for switchId
-               # set text switchName
-    ]
+  -> UI (Element, Element)
+mkSwitch switchId switchName bulmaColorName = do
+  aSwitch <-
+    UI.input ## switchId
+             #. ("switch is-rounded is-" <> bulmaColorName)
+             # set UI.type_ "checkbox"
+             # set UI.name switchId  
+
+  switchWrapper <-
+    UI.div #. "field" #+
+      [ element aSwitch
+      , UI.label # set UI.for switchId
+                 # set text switchName
+      ]
+
+  return (aSwitch, switchWrapper)
 
 -- | Settings for notifications (email, etc.).
 

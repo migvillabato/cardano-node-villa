@@ -47,6 +47,7 @@ library
                        Cardano.Tracer.Handlers.Metrics.Servers
                        Cardano.Tracer.Handlers.Metrics.Utils
 
+                       Cardano.Tracer.Handlers.RTView.Notifications.Check
                        Cardano.Tracer.Handlers.RTView.Notifications.Email
                        Cardano.Tracer.Handlers.RTView.Notifications.Send
                        Cardano.Tracer.Handlers.RTView.Notifications.Settings

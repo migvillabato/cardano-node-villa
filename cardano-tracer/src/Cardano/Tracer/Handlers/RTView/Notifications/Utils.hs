@@ -50,12 +50,14 @@ getNewEvents eventsQueues eventGroup = do
     Just (queue, _) -> atomically $ flushTBQueue queue
 
 addNewEvent
-  :: EventsQueue
+  :: EventsQueues
+  -> EventGroup
   -> Event
   -> IO ()
-addNewEvent eventsQueue event = atomically $
-  unlessM (isFullTBQueue eventsQueue) $
-    writeTBQueue eventsQueue event
+addNewEvent eventsQueues eventGroup event = do
+  queues <- readTVarIO eventsQueues
+  whenJust (M.lookup eventGroup queues) $ \(queue, _) -> atomically $
+    unlessM (isFullTBQueue queue) $ writeTBQueue queue event
 
 -- | ..
 updateNotificationsEvents

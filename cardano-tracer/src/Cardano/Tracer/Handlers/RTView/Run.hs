@@ -101,6 +101,7 @@ runRTView TracerConfig{logging, network, hasRTView}
           connectedNodes
           errors
           savedTO
+          eventsQueues
       ]
  where
   -- RTView's web page is available via 'https://' url only.

@@ -22,6 +22,7 @@ module Cardano.Tracer.Handlers.RTView.UI.Utils
   , findAndHide
   , findAndShow
   , findAndGetValue
+  , findAndGetCheckboxState
   , image
   , showIt
   , showInline
@@ -162,6 +163,15 @@ findAndGetValue window elId =
   UI.getElementById window (unpack elId) >>= \case
     Nothing -> return ""
     Just el -> get value el
+
+findAndGetCheckboxState
+  :: UI.Window
+  -> Text
+  -> UI (Maybe Bool)
+findAndGetCheckboxState window elId =
+  UI.getElementById window (unpack elId) >>= \case
+    Nothing -> return Nothing
+    Just el -> Just <$> get UI.checked el
 
 findByClassAndSet
   :: (UI Element -> UI Element)

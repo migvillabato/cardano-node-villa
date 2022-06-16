@@ -102,6 +102,7 @@ mkMainPage connectedNodes displayedElements acceptedMetrics savedTO
   restoreTheme window
   restoreChartsSettings
   restoreEmailSettings window
+  restoreEventsSettings window
 
   uiNoNodesProgressTimer <- UI.timer # set UI.interval 1000
   on UI.tick uiNoNodesProgressTimer . const $ do

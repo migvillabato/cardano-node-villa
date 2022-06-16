@@ -15,11 +15,11 @@ module Spec.Cli.LeadershipSchedule
   ) where
 
 import Cardano.Api
-import Cardano.Api.Shelley
-import Cardano.CLI.Shelley.Output
+import Cardano.Api.Shelley (PoolId)
+import Cardano.CLI.Shelley.Output (QueryTipLocalStateOutput(mEpoch))
 import Cardano.CLI.Shelley.Run.Query
 import Control.Monad (void)
-import Data.Monoid (Last (..))
+import Data.Monoid (Last(..))
 import Data.Set (Set)
 import Data.Text (Text)
 import GHC.Generics (Generic)
@@ -29,7 +29,7 @@ import Prelude
 import System.Environment (getEnvironment)
 import System.FilePath ((</>))
 import System.Info (os)
-import Testnet.Cardano (TestnetOptions (..), TestnetRuntime (..), defaultTestnetOptions, testnet)
+import Testnet.Cardano (TestnetOptions(..), TestnetRuntime (..))
 import Testnet.Utils (waitUntilEpoch)
 
 import qualified Data.Aeson as J
@@ -67,15 +67,16 @@ hprop_leadershipSchedule = H.integration . H.runFinallies . H.workspace "alonzo"
   conf@H.Conf { H.tempBaseAbsPath, H.tempAbsPath } <- H.noteShowM $
     H.mkConf (H.ProjectBase base) (H.YamlFilePath configurationTemplate) tempAbsBasePath' Nothing
 
-  fastTestnetOptions <- pure defaultTestnetOptions
+  fastTestnetOptions <- pure TC.defaultTestnetOptions
     { epochLength = 500
     , slotLength = 0.01
     , activeSlotsCoeff = 0.1
+    , nodeLoggingFormat = TC.NodeLoggingFormatAsJson
     }
   tr@TC.TestnetRuntime
     { testnetMagic
     , poolNodes
-    } <- testnet fastTestnetOptions conf
+    } <- TC.testnet fastTestnetOptions conf
 
   poolNode1 <- H.headM poolNodes
 

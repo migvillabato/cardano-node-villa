@@ -34,39 +34,40 @@ import           Cardano.Benchmarking.LogTypes
 import           Cardano.Benchmarking.LegacyTracer ()
 import           Cardano.Benchmarking.Types
 
+
+generatorTracer :: LogFormatting a => (a -> Namespace) -> Text -> Trace IO FormattedMessage -> IO (Trace IO a)
+generatorTracer namesFor tracerName tr = do 
+  tr'   <- machineFormatter Nothing tr
+  tr''  <- withDetailsFromConfig tr'
+  pure  $ withNamesAppended namesFor
+          $ appendName tracerName
+                tr''
+
 initDefaultTracers :: IO BenchTracers
 initDefaultTracers = do
-  t <-  standardTracer
-  benchTracer <- appendName "benchmark" <$> machineFormatter (Just "cardano") t
-  n2nSubmitTracer <- appendName "submitN2N" <$> machineFormatter (Just "cardano") t
-  connectTracer <- appendName "connect" <$> machineFormatter (Just "cardano") t
-  submitTracer <- appendName "submit" <$> machineFormatter (Just "cardano") t
-  lowLevelSubmitTracer <- appendName "llSubmit" <$> machineFormatter (Just "cardano") t
+  st <-  standardTracer
+  benchTracer <-  generatorTracer namesForBench "benchmark" st
+  configureTracers initialTraceConfig benchTracerDocumented [benchTracer]
+  n2nSubmitTracer <- generatorTracer namesForSubmission "submitN2N" st
+  configureTracers initialTraceConfig nodeToNodeSubmissionTraceDocumented [n2nSubmitTracer]
+  connectTracer <- generatorTracer namesForSendRecvConnect "connect" st
+  configureTracers initialTraceConfig sendRecvConnectDocumented [connectTracer]
+  submitTracer <- generatorTracer namesForSubmission2 "submit" st
+  configureTracers initialTraceConfig submission2Documented [submitTracer]
+  lowLevelSubmitTracer <- generatorTracer namesForllsubmit "llSubmit" st
+  configureTracers initialTraceConfig llsubmitDocumented [lowLevelSubmitTracer]
 
-  configureTracers initialTraceConfig logsDocumented [t]
-  traceWith t $ FormattedHuman False "logging start up h"
+  traceWith st $ FormattedHuman False "logging start up h"
   traceWith benchTracer $ TraceBenchTxSubDebug "logging start up m1"
   traceWith benchTracer $ TraceBenchTxSubDebug "logging start up m2"
   traceWith benchTracer $ TraceBenchTxSubDebug "logging start up m3"
   return $ BenchTracers
-    { btTxSubmit_    = Tracer $ traceWith benchTracer
-    , btConnect_     = Tracer $ traceWith connectTracer
-    , btSubmission2_ = Tracer $ traceWith submitTracer
-    , btLowLevel_    = Tracer $ traceWith lowLevelSubmitTracer
-    , btN2N_         = Tracer $ traceWith n2nSubmitTracer
-    }
-
-logsDocumented :: Documented FormattedMessage
-logsDocumented = Documented
-  [ emptyDoc "benchmark"
-  , emptyDoc "submitN2N"
-  , emptyDoc "connect"
-  , emptyDoc "submit"
-  , emptyDoc "llSubmit"
-  ]
-  where
-    emptyDoc :: Text -> DocMsg FormattedMessage
-    emptyDoc tr = DocMsg [ tr ] [] "ToDo: write benchmark tracer docs"
+    { btTxSubmit_    = Tracer (traceWith benchTracer)
+    , btConnect_     = Tracer (traceWith connectTracer)
+    , btSubmission2_ = Tracer (traceWith submitTracer)
+    , btLowLevel_    = Tracer (traceWith lowLevelSubmitTracer)
+    , btN2N_         = Tracer (traceWith n2nSubmitTracer)
+    }  
 
 initialTraceConfig :: TraceConfig
 initialTraceConfig = TraceConfig {
@@ -86,6 +87,23 @@ initialTraceConfig = TraceConfig {
   where
     initConf :: Text -> (Namespace, [ConfigOption])
     initConf tr = ([tr], [ConfDetail DMaximum])
+
+namesForBench :: TraceBenchTxSubmit TxId -> [Text]
+namesForBench (TraceBenchTxSubRecv _) = ["TraceBenchTxSubRecv"]
+namesForBench (TraceBenchTxSubStart _) = ["TraceBenchTxSubStart"]
+namesForBench (TraceBenchTxSubServAnn _) = ["TraceBenchTxSubStart"]
+namesForBench (TraceBenchTxSubServReq _) = ["TraceBenchTxSubServReq"]
+namesForBench (TraceBenchTxSubServAck _) = ["TraceBenchTxSubServAck"]
+namesForBench (TraceBenchTxSubServDrop _) = ["TraceBenchTxSubServDrop"]
+namesForBench (TraceBenchTxSubServOuts _) = ["TraceBenchTxSubServOuts"]
+namesForBench (TraceBenchTxSubServUnav _) = ["TraceBenchTxSubServUnav"]
+namesForBench (TraceBenchTxSubServFed _ _) = ["TraceBenchTxSubServFed"]
+namesForBench (TraceBenchTxSubServCons _) = ["TraceBenchTxSubServCons"]
+namesForBench  TraceBenchTxSubIdle = ["TraceBenchTxSubIdle"]
+namesForBench (TraceBenchTxSubRateLimit _) = ["TraceBenchTxSubRateLimit"]
+namesForBench (TraceBenchTxSubSummary _) = ["TraceBenchTxSubSummary"]
+namesForBench (TraceBenchTxSubDebug _) = ["TraceBenchTxSubDebug"]
+namesForBench (TraceBenchTxSubError _) = ["TraceBenchTxSubError"]
 
 instance LogFormatting (TraceBenchTxSubmit TxId) where
   forHuman = Text.pack . show
@@ -169,6 +187,29 @@ instance LogFormatting (TraceBenchTxSubmit TxId) where
               , "msg"  .= A.String s
               ]
 
+benchTracerDocumented :: Documented (TraceBenchTxSubmit TxId)
+benchTracerDocumented = Documented
+  [ emptyDoc ["benchmark", "TraceBenchTxSubRecv"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubStart"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServAnn"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServReq"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServAck"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServDrop"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServOuts"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServUnav"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServFed"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServCons"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubIdle"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubRateLimit"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubServCons"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubIdle"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubRateLimit"]
+  , emptyDoc ["benchmark", "TraceBenchTxSubSummary"]  
+  , emptyDoc ["benchmark", "TraceBenchTxSubDebug"]  
+  , emptyDoc ["benchmark", "TraceBenchTxSubError"]
+  ]
+
+
 instance LogFormatting NodeToNodeSubmissionTrace where  
   forHuman = Text.pack . show
   forMachine _verb = \case
@@ -194,21 +235,68 @@ instance LogFormatting NodeToNodeSubmissionTrace where
        [ "kind" .= A.String "TxList"
        , "sent" .= A.toJSON sent ]
 
+namesForSubmission :: NodeToNodeSubmissionTrace -> [Text]
+namesForSubmission ReqIdsBlocking {} = ["ReqIdsBlocking"]
+namesForSubmission IdsListBlocking {} = ["IdsListBlocking"]
+namesForSubmission ReqIdsPrompt {} = ["ReqIdsPrompt"]
+namesForSubmission IdsListPrompt {} = ["IdsListPrompt"]
+namesForSubmission EndOfProtocol {} = ["EndOfProtocol"]
+namesForSubmission ReqTxs {} = ["ReqTxs"]
+namesForSubmission TxList {} = ["TxList"]
+
+nodeToNodeSubmissionTraceDocumented :: Documented (NodeToNodeSubmissionTrace)
+nodeToNodeSubmissionTraceDocumented = Documented
+  [ emptyDoc ["submitN2N", "ReqIdsBlocking"]
+  , emptyDoc ["submitN2N", "IdsListBlocking"]
+  , emptyDoc ["submitN2N", "ReqIdsPrompt"]
+  , emptyDoc ["submitN2N", "IdsListPrompt"]
+  , emptyDoc ["submitN2N", "ReqTxs"]
+  , emptyDoc ["submitN2N", "TxList"]
+  ]
+
+instance LogFormatting SendRecvConnect where
+  forHuman = Text.pack . show
+  forMachine v t = toObject (mapVerbosity v) t
+
+sendRecvConnectDocumented :: Documented (SendRecvConnect)
+sendRecvConnectDocumented = Documented
+  [ emptyDoc ["connect"]
+  ]  
+
+namesForSendRecvConnect :: SendRecvConnect -> [Text]
+namesForSendRecvConnect _ = [] 
+
+instance LogFormatting SendRecvTxSubmission2 where
+  forHuman = Text.pack . show
+  forMachine v t = toObject (mapVerbosity v) t
+
+namesForSubmission2 :: SendRecvTxSubmission2 ->  [Text]
+namesForSubmission2 _ = [] 
+
+submission2Documented :: Documented (SendRecvTxSubmission2)
+submission2Documented = Documented
+  [ emptyDoc ["submission2"]
+  ]  
+
+instance LogFormatting TraceLowLevelSubmit where
+  forHuman = Text.pack . show
+  forMachine v t = toObject (mapVerbosity v) t
+
+namesForllsubmit :: TraceLowLevelSubmit ->  [Text]
+namesForllsubmit _ = [] 
+
+llsubmitDocumented :: Documented (TraceLowLevelSubmit)
+llsubmitDocumented = Documented
+  [ emptyDoc ["llSubmit"]
+  ]  
+
+
+emptyDoc :: Namespace -> DocMsg a
+emptyDoc ns = DocMsg ns [] "ToDo: write benchmark tracer docs"              
+
 mapVerbosity :: DetailLevel -> TracingVerbosity
 mapVerbosity v = case v of
   DMinimal  -> MinimalVerbosity
   DNormal   -> NormalVerbosity
   DDetailed -> MaximalVerbosity
   DMaximum  -> MaximalVerbosity
-
-instance LogFormatting SendRecvConnect where
-  forHuman = Text.pack . show
-  forMachine v t = toObject (mapVerbosity v) t
-
-instance LogFormatting SendRecvTxSubmission2 where
-  forHuman = Text.pack . show
-  forMachine v t = toObject (mapVerbosity v) t
-
-instance LogFormatting TraceLowLevelSubmit where
-  forHuman = Text.pack . show
-  forMachine v t = toObject (mapVerbosity v) t

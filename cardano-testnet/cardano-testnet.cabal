@@ -55,7 +55,8 @@ library
                       , unordered-containers
 
   hs-source-dirs:       src
-  exposed-modules:      Test.Base
+  exposed-modules:      Test.Assert
+                        Test.Base
                         Test.Process
                         Testnet.Byron
                         Testnet.Cardano
@@ -114,6 +115,8 @@ test-suite cardano-testnet-tests
                       , filepath
                       , hedgehog
                       , hedgehog-extras
+                      , lens
+                      , lens-aeson
                       , process
                       , tasty
                       , tasty-expected-failure

@@ -18,6 +18,7 @@ import Cardano.Api
 import Cardano.Api.Shelley (PoolId)
 import Cardano.CLI.Shelley.Output (QueryTipLocalStateOutput(mEpoch))
 import Cardano.CLI.Shelley.Run.Query
+import Control.Lens ((^.), (^?))
 import Control.Monad (void)
 import Data.Monoid (Last(..))
 import Data.Set (Set)
@@ -33,7 +34,9 @@ import Testnet.Cardano (TestnetOptions(..), TestnetRuntime (..))
 import Testnet.Utils (waitUntilEpoch)
 
 import qualified Data.Aeson as J
+import qualified Data.Aeson.Lens as J
 import qualified Data.Aeson.Types as J
+import qualified Data.List as L
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
@@ -46,10 +49,14 @@ import qualified Hedgehog.Extras.Test.File as H
 import qualified Hedgehog.Extras.Test.Process as H
 import qualified System.Directory as IO
 import qualified System.Info as SYS
+import qualified Test.Assert as H
 import qualified Test.Base as H
 import qualified Test.Process as H
 import qualified Testnet.Cardano as TC
 import qualified Testnet.Conf as H
+import qualified Data.Maybe as Maybe
+import Control.Lens (to)
+import Data.List ((\\))
 
 isLinux :: Bool
 isLinux = os == "linux"
@@ -502,6 +509,17 @@ hprop_leadershipSchedule = H.integration . H.runFinallies . H.workspace "alonzo"
 
   scheduleJson <- H.leftFailM $ H.readJsonFile scheduleFile
 
-  _leadershipSlotNumbers <- H.noteShowM $ fmap (fmap slotNumber) $ H.leftFail $ J.parseEither (J.parseJSON @[LeadershipSlot]) scheduleJson
+  expectedLeadershipSlotNumbers <- H.noteShowM $ fmap (fmap slotNumber) $ H.leftFail $ J.parseEither (J.parseJSON @[LeadershipSlot]) scheduleJson
 
-  True === False
+  H.assert $ not (L.null expectedLeadershipSlotNumbers)
+
+  leadershipDeadline <- H.noteShowM $ DTC.addUTCTime 90 <$> H.noteShowIO DTC.getCurrentTime
+
+  H.assertByDeadlineMCustom "Leader schedule is correct" leadershipDeadline $ do
+    vs <- H.readJsonLines $ TC.nodeStdout poolNode1
+    leaderSlots <- H.noteShow
+      $ L.filter       (>= minimum expectedLeadershipSlotNumbers)
+      $ Maybe.mapMaybe (\v -> v ^? J.key "data" . J.key "val" . J.key "slot" . J._Integer. to fromIntegral)
+      $ L.filter       (\v -> v ^. J.key "data" . J.key "val" . J.key "kind" . J._String == "TraceNodeIsLeader")
+      vs
+    return $ L.null $ expectedLeadershipSlotNumbers \\ leaderSlots

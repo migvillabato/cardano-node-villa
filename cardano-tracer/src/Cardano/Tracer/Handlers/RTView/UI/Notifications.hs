@@ -3,14 +3,16 @@
 
 module Cardano.Tracer.Handlers.RTView.UI.Notifications
   ( getCurrentEmailSettings
+  , getCurrentEventsSettings
   , restoreEmailSettings
   , restoreEventsSettings
   , saveEmailSettings
   , saveEventsSettings
+  , setNotifyIconState
   , setStatusTestEmailButton
   ) where
 
-import           Control.Monad (unless)
+import           Control.Monad (unless, when)
 import           Data.Maybe (fromMaybe)
 import           Data.Text (pack, unpack)
 import qualified Data.Text as T
@@ -21,6 +23,7 @@ import           Graphics.UI.Threepenny.Core
 import           Cardano.Tracer.Handlers.RTView.Notifications.Settings
 import           Cardano.Tracer.Handlers.RTView.Notifications.Timer
 import           Cardano.Tracer.Handlers.RTView.Notifications.Types
+import           Cardano.Tracer.Handlers.RTView.UI.Img.Icons
 import           Cardano.Tracer.Handlers.RTView.UI.Utils
 import           Cardano.Tracer.Handlers.RTView.UI.JS.Utils
 import           Cardano.Tracer.Handlers.RTView.Update.Utils
@@ -46,8 +49,10 @@ restoreEmailSettings window = do
       findAndSet (set value elValue) window elId
 
 restoreEventsSettings :: Window -> UI ()
-restoreEventsSettings window =
-  setEventsSettings =<< liftIO readSavedEventsSettings
+restoreEventsSettings window = do
+  eSettings <- liftIO readSavedEventsSettings
+  setEventsSettings eSettings
+  setNotifyIconState window
  where
   setEventsSettings settings = do
     setState (fst $ evsErrors settings)      "switch-errors"
@@ -65,6 +70,20 @@ restoreEventsSettings window =
 
   setPeriod elPeriod elId =
     selectOption elId $ fromIntegral elPeriod
+
+setNotifyIconState :: Window -> UI ()
+setNotifyIconState window = do
+  settings <- getCurrentEventsSettings window
+  let switches =
+        [ fst $ evsErrors settings
+        , fst $ evsCriticals settings
+        , fst $ evsAlerts settings
+        , fst $ evsEmergencies settings
+        ]
+      anyChecked = any id switches
+      noChecked  = not anyChecked
+  when anyChecked $ findAndSet (set html rtViewNotifySVG)   window "notifications-icon"
+  when noChecked  $ findAndSet (set html rtViewNoNotifySVG) window "notifications-icon"
 
 saveEmailSettings :: Window -> UI ()
 saveEmailSettings window =

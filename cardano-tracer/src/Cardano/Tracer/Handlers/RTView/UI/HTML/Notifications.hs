@@ -1,8 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Cardano.Tracer.Handlers.RTView.UI.HTML.Notifications
   ( mkNotificationsEvents
   , mkNotificationsSettings
+  , setNotifyIconState
   ) where
 
 import           Control.Monad (void)
@@ -84,21 +86,27 @@ mkNotificationsEvents eventsQueues = do
           ]
       ]
 
+  window <- askWindow
+
   on UI.click closeIt . const $ do
     void $ element notifications #. "modal"
-    askWindow >>= saveEventsSettings
+    saveEventsSettings window
 
   on UI.checkedChange switchErrors $ \state -> do
-    askWindow >>= saveEventsSettings
+    setNotifyIconState window
+    saveEventsSettings window
     liftIO $ updateNotificationsEvents eventsQueues EventErrors state
   on UI.checkedChange switchCriticals $ \state -> do
-    askWindow >>= saveEventsSettings
+    setNotifyIconState window
+    saveEventsSettings window
     liftIO $ updateNotificationsEvents eventsQueues EventCriticals state
   on UI.checkedChange switchAlerts $ \state -> do
-    askWindow >>= saveEventsSettings
+    setNotifyIconState window
+    saveEventsSettings window
     liftIO $ updateNotificationsEvents eventsQueues EventAlerts state
   on UI.checkedChange switchEmergencies $ \state -> do
-    askWindow >>= saveEventsSettings
+    setNotifyIconState window
+    saveEventsSettings window
     liftIO $ updateNotificationsEvents eventsQueues EventEmergencies state
 
   handleSelectChange selectNotifyPeriodErrors      EventErrors
@@ -147,7 +155,7 @@ mkSwitch switchId switchName bulmaColorName = do
     UI.input ## switchId
              #. ("switch is-rounded is-" <> bulmaColorName)
              # set UI.type_ "checkbox"
-             # set UI.name switchId  
+             # set UI.name switchId
 
   switchWrapper <-
     UI.div #. "field" #+

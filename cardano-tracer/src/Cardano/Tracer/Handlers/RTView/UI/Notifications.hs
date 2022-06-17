@@ -53,6 +53,7 @@ restoreEventsSettings window = do
   eSettings <- liftIO readSavedEventsSettings
   setEventsSettings eSettings
   setNotifyIconState window
+  setSwitchAllState eSettings
  where
   setEventsSettings settings = do
     setState (fst $ evsErrors settings)      "switch-errors"
@@ -71,6 +72,15 @@ restoreEventsSettings window = do
   setPeriod elPeriod elId =
     selectOption elId $ fromIntegral elPeriod
 
+  setSwitchAllState settings = do
+    let allChecked = all id
+          [ (fst $ evsErrors settings)
+          , (fst $ evsCriticals settings)
+          , (fst $ evsAlerts settings)
+          , (fst $ evsEmergencies settings)
+          ]
+    setState allChecked "switch-all"
+
 setNotifyIconState :: Window -> UI ()
 setNotifyIconState window = do
   settings <- getCurrentEventsSettings window
@@ -82,8 +92,10 @@ setNotifyIconState window = do
         ]
       anyChecked = any id switches
       noChecked  = not anyChecked
+      allChecked = all id switches
   when anyChecked $ findAndSet (set html rtViewNotifySVG)   window "notifications-icon"
   when noChecked  $ findAndSet (set html rtViewNoNotifySVG) window "notifications-icon"
+  findAndSet (set UI.checked allChecked) window "switch-all"
 
 saveEmailSettings :: Window -> UI ()
 saveEmailSettings window =

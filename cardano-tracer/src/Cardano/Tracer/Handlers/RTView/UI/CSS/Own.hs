@@ -569,6 +569,13 @@ span[data-tooltip] {
   color: #999;
 }
 
+.dark .rt-view-period-what-icon svg {
+  width: 18px;
+  margin-left: 8px;
+  margin-top: 5px;
+  color: #999;
+}
+
 .dark .rt-view-epoch-end svg {
   width: 16px;
   margin-left: 20px;
@@ -934,6 +941,13 @@ span[data-tooltip] {
 .light .rt-view-what-icon svg {
   width: 18px;
   margin-left: 12px;
+  color: #9a9a9a;
+}
+
+.light .rt-view-period-what-icon svg {
+  width: 18px;
+  margin-left: 8px;
+  margin-top: 5px;
   color: #9a9a9a;
 }
 

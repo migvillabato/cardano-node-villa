@@ -4,7 +4,6 @@
 module Cardano.Tracer.Handlers.RTView.UI.HTML.Notifications
   ( mkNotificationsEvents
   , mkNotificationsSettings
-  , setNotifyIconState
   ) where
 
 import           Control.Monad (void)
@@ -25,6 +24,8 @@ import           Cardano.Tracer.Handlers.RTView.UI.Utils
 mkNotificationsEvents :: EventsQueues -> UI Element
 mkNotificationsEvents eventsQueues = do
   closeIt <- UI.button #. "delete"
+
+  (switchAll, switchAllW) <- mkSwitch "switch-all" "All events" ""
 
   (switchErrors,      switchErrorsW)      <- mkSwitch "switch-errors"      "Errors"      "danger"
   (switchCriticals,   switchCriticalsW)   <- mkSwitch "switch-criticals"   "Criticals"   "danger"
@@ -75,11 +76,7 @@ mkNotificationsEvents eventsQueues = do
           , UI.mkElement "footer" #. "modal-card-foot rt-view-notification-settings-foot" #+
               [ UI.div #. "columns" #+
                   [ UI.div #. "column" #+
-                      [ UI.div #. "field is-grouped" #+
-                          [ UI.p #. "control" #+
-                              [ string "TEST"
-                              ]
-                          ]
+                      [ element switchAllW
                       ]
                   ]
               ]
@@ -109,6 +106,19 @@ mkNotificationsEvents eventsQueues = do
     saveEventsSettings window
     liftIO $ updateNotificationsEvents eventsQueues EventEmergencies state
 
+  on UI.checkedChange switchAll $ \state -> do
+    void $ element switchErrors      # set UI.checked state
+    void $ element switchCriticals   # set UI.checked state
+    void $ element switchAlerts      # set UI.checked state
+    void $ element switchEmergencies # set UI.checked state
+    setNotifyIconState window
+    saveEventsSettings window
+    liftIO $ do
+      updateNotificationsEvents eventsQueues EventErrors state
+      updateNotificationsEvents eventsQueues EventCriticals state
+      updateNotificationsEvents eventsQueues EventAlerts state
+      updateNotificationsEvents eventsQueues EventEmergencies state
+
   handleSelectChange selectNotifyPeriodErrors      EventErrors
   handleSelectChange selectNotifyPeriodCriticals   EventCriticals
   handleSelectChange selectNotifyPeriodAlerts      EventAlerts
@@ -130,7 +140,17 @@ mkDivider dTitle =
 mkErrorsSelectWrapper :: Element -> UI Element
 mkErrorsSelectWrapper sel =
   UI.div #. "rt-view-notifications-errors-select-wrapper" #+
-    [ UI.div #. "select is-link is-small" #+ [element sel]
+    [ UI.div #. "field is-grouped" #+
+        [ UI.p #. "control" #+
+            [ UI.div #. "select is-link is-small" #+
+                [ element sel
+                ]
+            ]
+        , UI.p #. "control" #+
+            [ image "has-tooltip-multiline has-tooltip-left rt-view-period-what-icon" whatSVG
+                    # set dataTooltip "How often notification will be sent"
+            ]
+        ]
     ]
 
 mkSelect :: String -> UI Element
@@ -151,9 +171,12 @@ mkSwitch
   -> String
   -> UI (Element, Element)
 mkSwitch switchId switchName bulmaColorName = do
+  let colorClass = case bulmaColorName of
+                     "" -> ""
+                     _  -> " is-" <> bulmaColorName
   aSwitch <-
     UI.input ## switchId
-             #. ("switch is-rounded is-" <> bulmaColorName)
+             #. ("switch is-rounded" <> colorClass)
              # set UI.type_ "checkbox"
              # set UI.name switchId
 
